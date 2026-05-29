@@ -1,8 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../models/user_model.dart';
 import 'data_service.dart';
-import 'mock_data_service.dart';
 import 'firebase_data_service.dart';
 
 /// Single source of truth for the data backend.
