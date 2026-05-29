@@ -43,3 +43,18 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Windows
+desktop.ini
+Thumbs.db
+
+# Environment / secrets
+.env
+*.env
+google-services.json
+GoogleService-Info.plist
+lib/firebase_options.dart
+
+# Firebase
+.firebase/
+firebase-debug.log

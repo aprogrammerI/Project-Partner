@@ -27,6 +27,18 @@ const Map<String, Color> lookingForColors = {
   'freelancer': Color(0xFF22C55E),
 };
 
+/// Predefined skills shown in profile setup as dropdown + free text.
+const List<String> predefinedSkills = [
+  // Програмирање
+  'Flutter', 'Dart', 'Python', 'JavaScript', 'Java', 'Kotlin', 'Swift', 'C++', 'SQL', 'Firebase',
+  // Дизајн
+  'UI/UX Design', 'Figma', 'Graphic Design', 'Video Editing', 'Photography',
+  // Бизнис
+  'Marketing', 'Business Plan', 'Finance', 'Project Management', 'Sales',
+  // Друго
+  'Content Writing', 'Research', 'Public Speaking', 'Data Analysis', 'Machine Learning',
+];
+
 /// Faculties shown in profile setup dropdown.
 const List<String> faculties = [
   'FINKI',

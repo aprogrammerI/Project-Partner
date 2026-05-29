@@ -1,0 +1,6 @@
+# Windows
+desktop.ini
+Thumbs.db
+
+# IntelliJ / Android Studio
+.idea/

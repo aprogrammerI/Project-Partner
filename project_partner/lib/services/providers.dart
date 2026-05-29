@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user_model.dart';
 import 'data_service.dart';
 import 'mock_data_service.dart';
+import 'firebase_data_service.dart';
 
 /// Single source of truth for the data backend.
 ///
@@ -11,7 +12,7 @@ import 'mock_data_service.dart';
 /// implementation returned below. Every screen depends on this provider,
 /// never on a concrete implementation, so nothing else has to change.
 final dataServiceProvider = Provider<DataService>((ref) {
-  return MockDataService();
+  return FirebaseDataService();
 });
 
 /// Reactive auth state. Emits null when signed out.

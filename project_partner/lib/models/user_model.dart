@@ -14,8 +14,11 @@ class User {
   final List<String> skills;
   final String lookingFor;
   final DateTime createdAt;
+  final int rating;
+  final DateTime lastActiveAt;
+  final int consecutivePasses;
 
-  const User({
+  User({
     required this.uid,
     required this.email,
     required this.name,
@@ -26,7 +29,10 @@ class User {
     required this.skills,
     required this.lookingFor,
     required this.createdAt,
-  });
+    this.rating = 0,
+    this.consecutivePasses = 0,
+    DateTime? lastActiveAt,
+  }) : lastActiveAt = lastActiveAt ?? DateTime.now();
 
   User copyWith({
     String? uid,
@@ -39,6 +45,9 @@ class User {
     List<String>? skills,
     String? lookingFor,
     DateTime? createdAt,
+    int? rating,
+    DateTime? lastActiveAt,
+    int? consecutivePasses,
   }) {
     return User(
       uid: uid ?? this.uid,
@@ -51,6 +60,9 @@ class User {
       skills: skills ?? this.skills,
       lookingFor: lookingFor ?? this.lookingFor,
       createdAt: createdAt ?? this.createdAt,
+      rating: rating ?? this.rating,
+      lastActiveAt: lastActiveAt ?? this.lastActiveAt,
+      consecutivePasses: consecutivePasses ?? this.consecutivePasses,
     );
   }
 
@@ -65,6 +77,9 @@ class User {
         'skills': skills,
         'lookingFor': lookingFor,
         'createdAt': createdAt.toIso8601String(),
+        'rating': rating,
+        'lastActiveAt': lastActiveAt.toIso8601String(),
+        'consecutivePasses': consecutivePasses,
       };
 
   factory User.fromJson(Map<String, dynamic> json) => User(
@@ -78,5 +93,10 @@ class User {
         skills: (json['skills'] as List?)?.cast<String>() ?? const [],
         lookingFor: json['lookingFor'] as String,
         createdAt: DateTime.parse(json['createdAt'] as String),
+        rating: (json['rating'] as num?)?.toInt() ?? 0,
+        lastActiveAt: json['lastActiveAt'] != null
+            ? DateTime.parse(json['lastActiveAt'] as String)
+            : DateTime.now(),
+        consecutivePasses: (json['consecutivePasses'] as num?)?.toInt() ?? 0,
       );
 }
