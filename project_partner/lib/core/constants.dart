@@ -29,13 +29,13 @@ const Map<String, Color> lookingForColors = {
 
 /// Predefined skills shown in profile setup as dropdown + free text.
 const List<String> predefinedSkills = [
-  // Програмирање
+  // Programming
   'Flutter', 'Dart', 'Python', 'JavaScript', 'Java', 'Kotlin', 'Swift', 'C++', 'SQL', 'Firebase',
-  // Дизајн
+  // Design
   'UI/UX Design', 'Figma', 'Graphic Design', 'Video Editing', 'Photography',
-  // Бизнис
+  // Business
   'Marketing', 'Business Plan', 'Finance', 'Project Management', 'Sales',
-  // Друго
+  // Other
   'Content Writing', 'Research', 'Public Speaking', 'Data Analysis', 'Machine Learning',
 ];
 

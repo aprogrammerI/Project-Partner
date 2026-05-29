@@ -103,10 +103,8 @@ class SettingsScreen extends ConsumerWidget {
     );
     if (ok != true) return;
     await ref.read(dataServiceProvider).logout();
+    ref.invalidate(currentUserStreamProvider);
     if (!context.mounted) return;
-    // Settings was pushed on top of HomeShell. _AuthGate rebuilds the root
-    // widget to SplashScreen, but the pushed Settings route would still be
-    // visible — pop back to the root so the user actually sees the splash.
     Navigator.of(context).popUntil((r) => r.isFirst);
   }
 
