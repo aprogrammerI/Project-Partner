@@ -4,24 +4,6 @@ A mobile app that uses a Tinder-style swipe mechanism to help people find the
 right partner for a goal — study buddies, project partners, co-founders,
 collaborators, and freelancers.
 
-This repo is the **Person 1 deliverable** (UI + mock backend). Person 2 will
-plug in Firebase without touching any UI code.
-
----
-
-## Status
-
-| Part | Scope                                          | Status   |
-|------|------------------------------------------------|----------|
-| A    | Foundation (theme, models, mock service)       | Done     |
-| B    | Auth + onboarding (splash, login, register, profile setup) | Done     |
-| C    | Core experience (discover, swipe, match, chat, matches list) | Done     |
-| D    | Polish + handoff (settings, auto-reply, README) | Done     |
-| E    | Firebase integration                            | Person 2 |
-
-The app currently runs end-to-end on a mock in-memory backend. Every screen,
-state, and transition that Person 2 needs to support is reachable from the UI.
-
 ---
 
 ## Quick start
@@ -31,25 +13,21 @@ flutter pub get
 flutter run
 ```
 
-Recommended targets while developing the UI:
-
-- **Chrome** — fastest, no emulator, hot-reload in milliseconds.
-- **Windows desktop** — `flutter run -d windows` if you prefer a native window.
-- **Android emulator** — works, but slower to start.
+> **Required files** (not in git — obtain from the team):
+> - `lib/firebase_options.dart`
+> - `android/app/google-services.json`
 
 ### Demo flow
 
 1. Splash → tap **Get started**
-2. Register with any email / any password (≥ 6 chars)
-3. Fill out the profile (photo is optional; pick at least a name, age, faculty,
-   bio, looking-for, and one skill)
+2. Register with a real email / password (≥ 6 chars)
+3. Fill out the profile (name, age, faculty, bio, looking-for, skills)
 4. Save → you land on the **Discover** tab
-5. Swipe right on **Elena Trajkovska** or **Maja Ilieva** to trigger the
-   "It's a match!" popup
-6. Tap **Send a message** to open the chat — send a message and watch the other
-   user auto-reply ~2 s later (mock only; see `MockDataService._scheduleAutoReply`)
-7. Open **Matches** tab — two pre-seeded conversations with **Ana** and **David**
-8. Tap **Profile → Settings** to edit profile, sign out, or "delete" the account
+5. Swipe right to like, left to pass
+6. Mutual like → **"It's a match!"** popup + automatic first message in chat
+7. Open **Matches** tab to see all your matches
+8. Tap a match to open chat and send messages
+9. Tap **Profile → Settings** to edit profile or sign out
 
 ---
 
@@ -57,19 +35,20 @@ Recommended targets while developing the UI:
 
 ```
 lib/
-├── main.dart                          # Runs ProviderScope + ProjectPartnerApp
+├── main.dart                          # Firebase init + seed + ProviderScope
 ├── app.dart                           # MaterialApp + _AuthGate (auth-aware root)
 ├── core/
-│   ├── constants.dart                 # Looking-for categories, faculties, icons, colors
+│   ├── constants.dart                 # Categories, faculties, predefinedSkills, icons, colors
 │   ├── theme.dart                     # AppColors + buildAppTheme()
-│   └── routes.dart                    # Named route constants (declarative push usage)
+│   └── routes.dart                    # Named route constants
 ├── models/
-│   ├── user_model.dart                # User { uid, email, name, age, photoUrl, … }
+│   ├── user_model.dart                # User { uid, email, name, age, rating, lastActiveAt, … }
 │   ├── match_model.dart               # Match { id, userIds, lastMessage, lastMessageAt }
 │   └── message_model.dart             # Message { id, matchId, senderId, text, createdAt }
 ├── services/
-│   ├── data_service.dart              # The DataService contract (auth / profile / discover / match / chat)
-│   ├── mock_data_service.dart         # In-memory implementation used by Part 1
+│   ├── data_service.dart              # DataService contract (abstract)
+│   ├── firebase_data_service.dart     # Firebase implementation (Auth, Firestore)
+│   ├── seed_service.dart              # Seeds 10 test users on first launch
 │   └── providers.dart                 # dataServiceProvider + currentUserStreamProvider
 ├── shared/widgets/                    # PrimaryButton, UserAvatar, LookingForChip, EmptyState
 └── features/
@@ -87,63 +66,85 @@ lib/
 - **State management**: Riverpod 2 (`flutter_riverpod`). All UI reads data via
   providers, never via concrete implementations.
 - **Auth-aware routing**: `_AuthGate` sits at `MaterialApp.home` and watches
-  `currentUserStreamProvider`. It swaps between `SplashScreen`,
-  `ProfileSetupScreen`, and `HomeShell` based on auth state. Pushed routes
-  (Settings, ProfileEdit, Chat) sit on the same Navigator, so destructive
-  actions `popUntil((r) => r.isFirst)` after logout.
+  `currentUserStreamProvider` (Firestore snapshots stream). It swaps between
+  `SplashScreen`, `ProfileSetupScreen`, and `HomeShell` based on auth + profile state.
 - **Swipe deck**: `flutter_card_swiper`. The deck is keyed by `cardsCount`, so
   we snapshot the candidate list once on first emit instead of rebuilding on
   every stream update (would reset mid-swipe).
 - **Streams everywhere**: every list view (candidates, matches, messages) reads
-  from a `StreamProvider` so the UI updates the instant data changes — same
-  shape Firestore snapshots will have.
+  from a `StreamProvider` so the UI updates the instant data changes.
 
 ---
 
-## For Person 2 — Firebase integration
+## Screens
 
-This is your TODO list. **You do not need to touch any screen** to integrate
-Firebase. Every screen depends on the `DataService` abstraction.
+| Screen | File | Providers used | Description |
+|--------|------|----------------|-------------|
+| `SplashScreen` | `auth/screens/splash_screen.dart` | — | Entry point, navigates to Login or Register |
+| `LoginScreen` | `auth/screens/login_screen.dart` | `dataServiceProvider` | Email + password login via Firebase Auth |
+| `RegisterScreen` | `auth/screens/register_screen.dart` | `dataServiceProvider` | Creates Firebase Auth account + Firestore user doc |
+| `ProfileSetupScreen` | `profile/screens/profile_setup_screen.dart` | `dataServiceProvider`, `currentUserStreamProvider` | Forced after register — fills name, age, faculty, bio, skills, looking-for |
+| `HomeShell` | `home/home_shell.dart` | `currentUserStreamProvider` | Bottom nav shell — Discover, Matches, Profile tabs |
+| `DiscoveryScreen` | `discovery/discovery_screen.dart` | `dataServiceProvider` | Swipe deck powered by `candidates()` algorithm |
+| `MatchesListScreen` | `matches/matches_list_screen.dart` | `dataServiceProvider` | Live list of all matches ordered by last message |
+| `ChatScreen` | `chat/chat_screen.dart` | `dataServiceProvider` | Real-time messages stream + send message |
+| `ProfileScreen` | `profile/screens/profile_view_screen.dart` | `currentUserStreamProvider` | Shows current user profile + link to Settings |
+| `ProfileEditScreen` | `profile/screens/profile_edit_screen.dart` | `dataServiceProvider`, `currentUserStreamProvider` | Edit profile fields + save to Firestore |
+| `SettingsScreen` | `settings/screens/settings_screen.dart` | `dataServiceProvider` | Sign out, delete account, about |
 
-### The one file you'll swap
+---
 
-[`lib/services/providers.dart`](lib/services/providers.dart)
+## Discovery Algorithm
 
-```dart
-final dataServiceProvider = Provider<DataService>((ref) {
-  return MockDataService();          // ← swap to FirebaseDataService();
-});
-```
+`candidates()` in `FirebaseDataService` applies a 3-tier priority sort:
 
-### What you need to build
+| Priority | Logic |
+|----------|-------|
+| 1 (highest) | Users who already liked you — shown first for fast matching |
+| 2 | Skills match — more shared skills = higher position |
+| 3 | Rating — higher rating = higher position |
 
-Create `lib/services/firebase_data_service.dart` that implements
-[`DataService`](lib/services/data_service.dart). The interface is:
+**Additional rules:**
+- Same `lookingFor` category shown first, then other categories below
+- Passed users reappear after 5 minutes (set to 10 days before release)
+- If someone liked you and you passed them, they reappear immediately
 
-| Method                                   | Where to point it                                    |
-|------------------------------------------|------------------------------------------------------|
-| `currentUser()`                          | Firebase Auth + Firestore `users/{uid}` lookup       |
-| `currentUserChanges()`                   | `FirebaseAuth.authStateChanges().asyncMap(...)`      |
-| `register({email, password})`            | `createUserWithEmailAndPassword` + create user doc with empty profile |
-| `login({email, password})`               | `signInWithEmailAndPassword` + read user doc         |
-| `logout()`                               | `signOut()`                                          |
-| `updateProfile(user)`                    | `users/{uid}.set(user.toJson(), merge: true)`        |
-| `uploadProfilePhoto(file)`               | Upload to `profile_photos/{uid}.jpg` → return download URL |
-| `getUserById(uid)`                       | `users/{uid}.get()`                                  |
-| `candidates()`                           | Stream of `users` collection, filter out current user and anyone in `matches`/`swipes/{uid}` |
-| `likeUser(targetUid)`                    | Write `likes/{uid}_{targetUid}`. If `likes/{targetUid}_{uid}` exists → create `matches/{...}` and return it |
-| `passUser(targetUid)`                    | Write `passes/{uid}_{targetUid}` (or single `swipes` collection with direction)        |
-| `matches()`                              | Stream of `matches` where `userIds` array-contains current uid, ordered by `lastMessageAt` desc |
-| `messages(matchId)`                      | Stream of `matches/{matchId}/messages` ordered by `createdAt` asc |
-| `sendMessage({matchId, text})`           | Add to `matches/{matchId}/messages` and update parent's `lastMessage` + `lastMessageAt` |
+---
 
-All models already have `fromJson` / `toJson`, so reads and writes are one-liners.
+## Match Logic
 
-### Recommended Firestore layout
+Handled in `likeUser()` in `FirebaseDataService`:
+
+1. Write `likes/{uid}_{targetUid}` to Firestore
+2. Give target user +5 rating and reset their `consecutivePasses` to 0
+3. Check if `likes/{targetUid}_{uid}` exists (mutual like)
+4. If mutual → create `matches/{matchId}` with both user IDs
+5. Give both users +10 rating
+6. Write an automatic first message (`"You matched! Say hello 👋"`) so the chat is never empty
+7. Return the `Match` object → UI shows the match popup
+
+If no mutual like → return `null` (no popup).
+
+---
+
+## Rating System
+
+| Event | Change |
+|-------|--------|
+| Someone likes you | +5 |
+| Consecutive passes (3 in a row) | -1 |
+| Mutual match | +10 for both |
+| First message sent in a match | +5 |
+| Inactive 10+ days | -10 (applied at sort time, not written to DB) |
+
+---
+
+## Firestore Layout
 
 ```
 users/{uid}
-  email, name, age, photoUrl, bio, faculty, skills[], lookingFor, createdAt
+  email, name, age, photoUrl, bio, faculty, skills[],
+  lookingFor, createdAt, rating, lastActiveAt, consecutivePasses
 
 likes/{fromUid}_{toUid}
   from, to, createdAt
@@ -153,56 +154,25 @@ passes/{fromUid}_{toUid}
 
 matches/{matchId}
   userIds: [uidA, uidB]
-  createdAt
-  lastMessage
-  lastMessageAt
+  createdAt, lastMessage, lastMessageAt
 
 matches/{matchId}/messages/{messageId}
   matchId, senderId, text, createdAt
 ```
 
-### Things you can delete after the swap
-
-- [`lib/services/mock_data_service.dart`](lib/services/mock_data_service.dart)
-- The `_scheduleAutoReply` helper inside it (canned chat replies — demo only)
-- The `_willMatchBack` set + the seeded "match-back" candidates
-
-### Things to keep an eye on
-
-- **Match popup**: the UI shows the match popup whenever `likeUser` returns a
-  non-null `Match`. With Firestore, the second side of a mutual like usually
-  arrives via a server-side function or a transaction — make sure
-  `likeUser` returns the freshly created match doc.
-- **Stream replay**: the mock service emits the current snapshot on first
-  subscribe via `async*` + `yield`. Firestore does this natively — no work
-  needed.
-- **Photo upload**: `uploadProfilePhoto` currently returns the local file path,
-  which `UserAvatar` recognizes and renders via `Image.file`. Once it returns a
-  real `https://…` URL from Firebase Storage, `UserAvatar` uses
-  `CachedNetworkImage` automatically. No widget changes needed.
-
 ---
 
 ## Dependencies
 
-| Package              | Why                                                    |
-|----------------------|--------------------------------------------------------|
-| `flutter_riverpod`   | App-wide state management                              |
-| `flutter_card_swiper`| Swipe deck on the Discover screen                      |
-| `cached_network_image`| Smooth network image loading for avatars and cards    |
-| `image_picker`       | Pick profile photo from gallery / camera               |
-| `intl`               | Chat timestamp formatting                              |
-| `google_fonts`       | Inter font family                                      |
-| `uuid`               | IDs for mock data                                      |
+| Package               | Why                                            |
+|-----------------------|------------------------------------------------|
+| `flutter_riverpod`    | App-wide state management                      |
+| `flutter_card_swiper` | Swipe deck on the Discover screen              |
+| `cached_network_image`| Smooth network image loading                   |
+| `image_picker`        | Pick profile photo from gallery / camera       |
+| `intl`                | Chat timestamp formatting                      |
+| `google_fonts`        | Inter font family                              |
+| `firebase_core`       | Firebase initialization                        |
+| `firebase_auth`       | Authentication                                 |
+| `cloud_firestore`     | Real-time database                             |
 
-Person 2 will additionally add: `firebase_core`, `firebase_auth`,
-`cloud_firestore`, `firebase_storage`.
-
----
-
-## Suggested git workflow
-
-- `main`   — stable, demo-ready
-- `dev`    — integration branch
-- `part-1-ui-done` — snapshot of the UI-only milestone before Firebase work
-- `firebase-integration` — Person 2's feature branch off `dev`
