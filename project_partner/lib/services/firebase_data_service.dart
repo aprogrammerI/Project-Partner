@@ -126,7 +126,7 @@ class FirebaseDataService implements DataService {
     final passesSnap = await _db.collection('passes')
         .where('from', isEqualTo: uid).get();
 
-    // TODO: change back to 10 days before release
+    // TODO: change back to 10 days
     final expiryTime = DateTime.now().subtract(const Duration(minutes: 5));
     final whoLikedSnap0 = await _db.collection('likes')
         .where('to', isEqualTo: uid).get();

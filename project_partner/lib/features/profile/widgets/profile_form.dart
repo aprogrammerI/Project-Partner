@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-
+import '../../../services/universities_api_service.dart';
 import '../../../core/constants.dart';
 import '../../../core/theme.dart';
 import '../../../models/user_model.dart';
@@ -46,6 +46,7 @@ class _ProfileFormState extends ConsumerState<ProfileForm> {
   late List<String> _skills;
   late String _photoUrl;
   bool _saving = false;
+  List<String> _faculties = faculties; // fallback
 
   @override
   void initState() {
@@ -55,12 +56,20 @@ class _ProfileFormState extends ConsumerState<ProfileForm> {
     _age = TextEditingController(text: u.age == 0 ? '' : u.age.toString());
     _bio = TextEditingController(text: u.bio);
     _skillInput = TextEditingController();
-    _faculty = faculties.contains(u.faculty) ? u.faculty : faculties.first;
+    _faculty = _faculties.contains(u.faculty) ? u.faculty : _faculties.first;
     _lookingFor = lookingForOptions.keys.contains(u.lookingFor)
         ? u.lookingFor
         : lookingForOptions.keys.first;
     _skills = List<String>.from(u.skills);
     _photoUrl = u.photoUrl;
+    UniversityService().fetchFaculties().then((list) {
+      if (mounted) setState(() {
+        _faculties = list;
+        _faculty = list.contains(widget.initial.faculty)
+            ? widget.initial.faculty
+            : list.first;
+      });
+    });
   }
 
   @override
@@ -205,7 +214,7 @@ class _ProfileFormState extends ConsumerState<ProfileForm> {
               prefixIcon: Icon(Icons.school_outlined),
             ),
             items: [
-              for (final f in faculties)
+              for (final f in _faculties)
                 DropdownMenuItem(value: f, child: Text(f)),
             ],
             onChanged: (v) => setState(() => _faculty = v ?? _faculty),
